@@ -1,6 +1,9 @@
 import express from 'express';
 import connectDB from './models/db.js';
 import Booking from './models/booking.js';
+import response from './helpers/helper.js';
+import booking from './routes/booking.js';
+
 
 const app = express();
 const port = process.env.PORT;
@@ -11,21 +14,17 @@ app.get('/', (req, res)=>{
     res.send('Konek');
 });
 
-app.get('/booking', async(req, res)=>{
-    try{
-        const result = await Booking.find({no_kamar: {$ne: 1}});
+app.use('/booking', booking);
 
-        if(result == false){
-            return res.status(404).json({
-                status: 'Data Not Found',
-                data: null
-            });
-        }
-        res.status(200).json(result);
-    }catch(err){
-        res.status(500).send('Gagal Mengambil Data');
-    }
+app.use((req, res)=>{
+    res.status(404).json({
+        status_code: 404,
+        msg: 'Page Not Found',
+        data: null,
+    });
 })
+
+
 
 app.listen(port, ()=>{
     console.log(`connected successfully on port ${port}`);
