@@ -2,6 +2,7 @@ import express from 'express';
 import Booking from '../models/booking.js';
 import Kamar from '../models/kamar.js';
 import response from '../helpers/helper.js';
+import {body, validationResult} from 'express-validator';
 
 
 const routeBooking = express.Router();
@@ -28,7 +29,7 @@ routeBooking.get('/search', async (req, res)=>{
         if(findKamar.isBooked == true){
             return response(409, null, 'Kamar sudah di booking', res);
         }
-        response(200, findKamar, 'Data Kamar', res);
+        response(200, findKamar, 'Kamar tersedia', res);
 
     }catch(err){
         response(500, null, 'Gagal Mencari Data', res);
@@ -36,10 +37,14 @@ routeBooking.get('/search', async (req, res)=>{
 });
 
 
-routeBooking.post('/search', async(req, res)=>{
+routeBooking.post('/search',
+    body('email').isEmail().withMessage('Invalid Email Address'),
+    body('nomor_telepon').isMobilePhone('id-ID').withMessage('Invalid Phone Number')  
+    ,async(req, res)=>{
     try{
         const {nama_lengkap, nomor_telepon, email, tgl_check_in, tgl_check_out, jumlah_tamu} = req.body;
         // const {no_kamar} = req.query;
+        const errors = validationResult();
         const result = await Booking.insertOne({
             nama_lengkap,
             nomor_telepon,
