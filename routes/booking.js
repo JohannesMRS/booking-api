@@ -33,20 +33,37 @@ routeBooking.get('/search', async (req, res)=>{
     }catch(err){
         response(500, null, 'Gagal Mencari Data', res);
     }
+});
+
+
+routeBooking.post('/search', async(req, res)=>{
+    try{
+        const {nama_lengkap, nomor_telepon, email, tgl_check_in, tgl_check_out, jumlah_tamu} = req.body;
+        // const {no_kamar} = req.query;
+        const result = await Booking.insertOne({
+            nama_lengkap,
+            nomor_telepon,
+            no_kamar: req.query.no_kamar,
+            email,
+            tgl_check_in,
+            tgl_check_out,
+            jumlah_tamu
+        });
+
+        const updateKamar = await Kamar.findOneAndUpdate(
+            {no_kamar: req.query.no_kamar},
+            {$set: {
+                isBooked: true,
+            }}
+        )
+
+        response(200, result, 'Data berhasil ditambah', res);
+    }catch(err){
+        response(500, null, 'Gagal mengirim data', res);
+    }
 })
 
-// routeBooking.post('/', async(req, res)=>{
-//     try{
-//         const {nama_kamar, no_kamar, tgl_check_in, tgl_check_out} = req.body;
-
-//         const findKamar = await Kamar.findOne({no_kamar: no_kamar});
-
-//         if(findKamar.isBooked == false){
-//             console.log('Kamar Kosong');
-//         }
 
 
-//     }
-// })
 
 export default routeBooking;
