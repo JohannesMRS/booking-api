@@ -64,7 +64,7 @@ routeBooking.post('/search',
 
         response(200, result, 'Data berhasil ditambah', res);
     }catch(err){
-        response(500, null, 'Gagal mengirim data', res);
+        response(500, null, err, res);
     }
 })
 
