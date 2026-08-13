@@ -37,35 +37,60 @@ routeBooking.get('/search', async (req, res)=>{
 });
 
 
-routeBooking.post('/search',
+routeBooking.post('/search',[
     body('email').isEmail().withMessage('Invalid Email Address'),
-    body('nomor_telepon').isMobilePhone('id-ID').withMessage('Invalid Phone Number')  
+    body('nomor_telepon').isMobilePhone('id-ID').withMessage('Invalid Phone Number')
+]
     ,async(req, res)=>{
-    try{
-        const {nama_lengkap, nomor_telepon, email, tgl_check_in, tgl_check_out, jumlah_tamu} = req.body;
-        // const {no_kamar} = req.query;
-        const errors = validationResult();
-        const result = await Booking.insertOne({
-            nama_lengkap,
-            nomor_telepon,
-            no_kamar: req.query.no_kamar,
-            email,
-            tgl_check_in,
-            tgl_check_out,
-            jumlah_tamu
-        });
+        try{
+            const {nama_lengkap, nomor_telepon, email, tgl_check_in, tgl_check_out, jumlah_tamu} = req.body;
+            // const {id_kamar} = req.params;
+            const {no_kamar} = req.query;
+            const hargaAwal = 1370000;
+            const tglCheckIn = new Date(tgl_check_in);
+            const tglCheckOut = new Date(tgl_check_out);
 
-        const updateKamar = await Kamar.findOneAndUpdate(
-            {no_kamar: req.query.no_kamar},
-            {$set: {
-                isBooked: true,
-            }}
-        )
+            const selisihMilidetik = tglCheckOut - tglCheckIn;
+            const selisihHari = selisihMilidetik / (1000 * 60 * 60 * 24);
+            const total_harga = hargaAwal * selisihHari;
+            
 
-        response(200, result, 'Data berhasil ditambah', res);
-    }catch(err){
-        response(500, null, err, res);
-    }
+            const errors = validationResult(req);
+
+            if(!errors.isEmpty()){
+                return response(400, errors.array(), 'Validasi gagal', res);
+            }
+
+            const findKamar = await Kamar.findOne({
+                no_kamar: req.query.no_kamar
+            });
+
+            if(findKamar.isBooked == true){
+                return response(409, null, 'Kamar sudah di booking', res);
+            }
+
+            const result = await Booking.create({
+                nama_lengkap,
+                nomor_telepon,
+                no_kamar: req.query.no_kamar,
+                email,
+                tgl_check_in,
+                tgl_check_out,
+                jumlah_tamu,
+                total_harga: total_harga,
+            });
+
+            const updateKamar = await Kamar.findOneAndUpdate(
+                {no_kamar: req.query.no_kamar},
+                {$set: {
+                    isBooked: true,
+                }}
+            )
+
+            response(200, result, 'Data berhasil ditambah', res);
+        }catch(err){
+            response(500, null, err.message, res);
+        }
 })
 
 
